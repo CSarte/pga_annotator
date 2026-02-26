@@ -6,7 +6,8 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
+from fastapi.staticfiles import StaticFiles
+import os
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import exists, func
 
@@ -20,6 +21,9 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+STATIC_DIR = os.path.join(os.path.dirname(__file__), "static")
+if os.path.isdir(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # Serve local images in dev or if you're hosting images on server disk
 DATASET_ROOT = os.getenv("DATASET_ROOT", "./roboflow_dataset")

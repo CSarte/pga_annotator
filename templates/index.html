@@ -10,7 +10,45 @@
       .panel { min-width: 300px; }
       .field { margin: 10px 0; }
       select, input, button { width: 100%; padding: 8px; }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.55);
+        padding: 24px;
+        z-index: 9999;
+      }
+      .modal.show { display: block; }
+      .modal-content {
+        max-width: 900px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      #helpBtn {
+        margin: 8px 0;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        background: #f8f8f8;
+        cursor: pointer;
+      }
+      #closeHelp {
+        padding: 6px 10px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        background: #f8f8f8;
+        cursor: pointer;
+      }
     </style>
+    
   </head>
   <body>
     <h2>PGA Severity Rater (0–4): <br> Please use the same username each time and select all images for the subset. Reference the instructions on the form as you annotate.</h2>
@@ -58,6 +96,30 @@
         <button onclick="loadNext()">Skip (no save)</button>
 
         <div id="status" style="margin-top: 10px;"></div>
+        <button id="helpBtn" type="button">How to rate (PGA guide)</button>
+
+        <div id="helpModal" class="modal" aria-hidden="true">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3>PGA rating guide</h3>
+              <button id="closeHelp" type="button">✕</button>
+            </div>
+
+            <p style="margin-top: 0.5rem;">
+              Use this as a reference when scoring erythema, induration, and scaling (0–4).
+            </p>
+
+            <img
+              src="/static/pga_guide.png"
+              alt="PGA guide reference"
+              style="width: 100%; height: auto; border-radius: 8px; border: 1px solid #ddd;"
+            />
+
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">
+              Tip: keep your scoring consistent across images.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -109,6 +171,37 @@
         document.getElementById("status").innerText = "Saved!";
         await loadNext();
       }
+    </script>
+    <script>
+      const helpBtn = document.getElementById("helpBtn");
+      const helpModal = document.getElementById("helpModal");
+      const closeHelp = document.getElementById("closeHelp");
+
+      helpBtn?.addEventListener("click", () => {
+        helpModal.classList.add("show");
+        helpModal.setAttribute("aria-hidden", "false");
+      });
+
+      closeHelp?.addEventListener("click", () => {
+        helpModal.classList.remove("show");
+        helpModal.setAttribute("aria-hidden", "true");
+      });
+
+      // close when clicking the backdrop
+      helpModal?.addEventListener("click", (e) => {
+        if (e.target === helpModal) {
+          helpModal.classList.remove("show");
+          helpModal.setAttribute("aria-hidden", "true");
+        }
+      });
+
+      // ESC to close
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          helpModal.classList.remove("show");
+          helpModal.setAttribute("aria-hidden", "true");
+        }
+      });
     </script>
   </body>
 </html>
