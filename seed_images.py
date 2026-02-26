@@ -44,7 +44,14 @@ def main():
             if image_id in existing:
                 continue
             subset = detect_subset(path)
-            db.add(ImageItem(image_id=image_id, subset=subset, image_path=path, image_url=None))
+            relpath = rel_id(dataset_root, path)  # already returns relative
+            db.add(ImageItem(
+                image_id=relpath,
+                subset=subset,
+                image_relpath=relpath,   # ✅ store relative path
+                image_path=path,
+                image_url=None
+            ))
             added += 1
 
         db.commit()

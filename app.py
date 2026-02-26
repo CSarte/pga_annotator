@@ -63,8 +63,7 @@ def next_image(username: str, subset: str = "all", db: Session = Depends(get_db)
     if item.image_url:
         url = item.image_url
     else:
-        rel = os.path.relpath(item.image_path, DATASET_ROOT).replace("\\", "/")
-        url = f"/images/{rel}"
+        url = f"/images/{item.image_relpath}"
 
     return {"done": False, "image_id": item.image_id, "subset": item.subset, "image_url": url}
 

@@ -7,6 +7,7 @@ class ImageItem(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     image_id = Column(String, nullable=False, unique=True)  # stable ID (relative path)
     subset = Column(String, nullable=False)                 # train/valid/test/unknown
+    image_relpath = Column(String, nullable=False)
     image_path = Column(String, nullable=True)              # local path for dev / disk-host
     image_url = Column(String, nullable=True)               # for S3/R2/Supabase storage
 
