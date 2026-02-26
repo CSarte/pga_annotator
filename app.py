@@ -13,7 +13,7 @@ from sqlalchemy.sql import exists, func
 from db import get_db, engine
 from models import Base, ImageItem, Rating
 
-RATING_FIELDS = ["erythema", "induration", "scaling", "overall_pga"]
+RATING_FIELDS = ["erythema", "induration", "scaling"]
 RATING_MIN, RATING_MAX = 0, 4
 
 Base.metadata.create_all(bind=engine)
@@ -27,6 +27,10 @@ DATASET_ROOT = os.path.abspath(DATASET_ROOT)
 if os.path.isdir(DATASET_ROOT):
     app.mount("/images", StaticFiles(directory=DATASET_ROOT), name="images")
 
+def compute_overall_pga(erythema: int, induration: int, scaling: int) -> int:
+    # Option A: rounded average
+    overall = round((erythema + induration + scaling) / 3)
+    return max(0, min(4, int(overall)))
 
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
@@ -78,7 +82,7 @@ def submit(payload: Dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="username, image_id, subset required")
 
     ratings = {}
-    for f in RATING_FIELDS:
+    for f in RATING_FIELDS:   # now only erythema, induration, scaling
         if f not in payload:
             raise HTTPException(status_code=400, detail=f"Missing field: {f}")
         try:
@@ -88,14 +92,25 @@ def submit(payload: Dict, db: Session = Depends(get_db)):
         validate_rating(val)
         ratings[f] = val
 
+    # ✅ Compute overall automatically
+    overall_pga = compute_overall_pga(
+        ratings["erythema"],
+        ratings["induration"],
+        ratings["scaling"],
+    )
+
     now = int(time.time())
 
-    existing = db.query(Rating).filter(Rating.username == username, Rating.image_id == image_id).first()
+    existing = db.query(Rating).filter(
+        Rating.username == username,
+        Rating.image_id == image_id
+    ).first()
+
     if existing:
         existing.erythema = ratings["erythema"]
         existing.induration = ratings["induration"]
         existing.scaling = ratings["scaling"]
-        existing.overall_pga = ratings["overall_pga"]
+        existing.overall_pga = overall_pga   # ✅ computed value
         existing.subset = subset
         existing.created_at = now
     else:
@@ -107,7 +122,7 @@ def submit(payload: Dict, db: Session = Depends(get_db)):
                 erythema=ratings["erythema"],
                 induration=ratings["induration"],
                 scaling=ratings["scaling"],
-                overall_pga=ratings["overall_pga"],
+                overall_pga=overall_pga,   # ✅ computed value
                 created_at=now,
             )
         )

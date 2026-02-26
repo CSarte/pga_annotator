@@ -53,10 +53,6 @@
           <label>Scaling (0–4)</label>
           <select id="scaling"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
         </div>
-        <div class="field">
-          <label>Overall PGA (0–4)</label>
-          <select id="overall_pga"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
-        </div>
 
         <button onclick="submitRating()">Submit rating</button>
         <button onclick="loadNext()">Skip (no save)</button>
@@ -97,7 +93,6 @@
           erythema: parseInt(document.getElementById("erythema").value),
           induration: parseInt(document.getElementById("induration").value),
           scaling: parseInt(document.getElementById("scaling").value),
-          overall_pga: parseInt(document.getElementById("overall_pga").value),
         };
 
         const res = await fetch("/api/submit", {
