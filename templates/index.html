@@ -1,0 +1,119 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>PGA Rater</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; }
+      .row { display: flex; gap: 20px; }
+      img { max-width: 700px; max-height: 650px; border: 1px solid #ddd; }
+      .panel { min-width: 300px; }
+      .field { margin: 10px 0; }
+      select, input, button { width: 100%; padding: 8px; }
+    </style>
+  </head>
+  <body>
+    <h2>PGA Severity Rater (0–4)</h2>
+
+    <div class="field">
+      <label>Username</label>
+      <input id="username" placeholder="e.g., cat_s" />
+    </div>
+
+    <div class="field">
+      <label>Subset</label>
+      <select id="subset">
+        <option value="all">all</option>
+        <option value="train">train</option>
+        <option value="valid">valid</option>
+        <option value="test">test</option>
+      </select>
+    </div>
+
+    <button onclick="loadNext()">Load next image</button>
+
+    <hr/>
+
+    <div class="row">
+      <div>
+        <div id="meta"></div>
+        <img id="img" src="" alt="image will appear here" />
+      </div>
+
+      <div class="panel">
+        <div class="field">
+          <label>Erythema (0–4)</label>
+          <select id="erythema"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        </div>
+        <div class="field">
+          <label>Induration (0–4)</label>
+          <select id="induration"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        </div>
+        <div class="field">
+          <label>Scaling (0–4)</label>
+          <select id="scaling"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        </div>
+        <div class="field">
+          <label>Overall PGA (0–4)</label>
+          <select id="overall_pga"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option></select>
+        </div>
+
+        <button onclick="submitRating()">Submit rating</button>
+        <button onclick="loadNext()">Skip (no save)</button>
+
+        <div id="status" style="margin-top: 10px;"></div>
+      </div>
+    </div>
+
+    <script>
+      let current = null;
+
+      async function loadNext() {
+        const username = document.getElementById("username").value.trim();
+        const subset = document.getElementById("subset").value;
+        if (!username) { alert("Enter username first"); return; }
+
+        const res = await fetch(`/api/next?username=${encodeURIComponent(username)}&subset=${encodeURIComponent(subset)}`);
+        const data = await res.json();
+
+        if (data.done) {
+          document.getElementById("status").innerText = data.message || "Done";
+          return;
+        }
+
+        current = data;
+        document.getElementById("img").src = data.image_url;
+        document.getElementById("meta").innerText = `Image: ${data.image_id} (${data.subset})`;
+        document.getElementById("status").innerText = "";
+      }
+
+      async function submitRating() {
+        if (!current) { alert("Load an image first"); return; }
+
+        const payload = {
+          username: document.getElementById("username").value.trim(),
+          image_id: current.image_id,
+          subset: current.subset,
+          erythema: parseInt(document.getElementById("erythema").value),
+          induration: parseInt(document.getElementById("induration").value),
+          scaling: parseInt(document.getElementById("scaling").value),
+          overall_pga: parseInt(document.getElementById("overall_pga").value),
+        };
+
+        const res = await fetch("/api/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (!data.ok) {
+          document.getElementById("status").innerText = "Error submitting";
+          return;
+        }
+        document.getElementById("status").innerText = "Saved!";
+        await loadNext();
+      }
+    </script>
+  </body>
+</html>
